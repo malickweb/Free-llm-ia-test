@@ -35,15 +35,17 @@ export default function ProviderCard({ p, onOpen, onChat }) {
                 >
                     S'inscrire ↗
                 </a>
-                <button
-                    className="btn-chat"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onChat(p);
-                    }}
-                >
-                    💬 Chat IA
-                </button>
+                {p.hasServerKey && (
+                    <button
+                        className="btn-chat"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onChat(p);
+                        }}
+                    >
+                        💬 Chat IA
+                    </button>
+                )}
             </div>
         </div>
     );

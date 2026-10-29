@@ -50,35 +50,22 @@ export default function App() {
         let out = providers.filter((p) => (!needle || `${p.name} ${p.models.join(' ')} ${p.best} ${p.note}`.toLowerCase().includes(needle)) && (cat === 'all' || p.cat === cat) && (!oai || p.openai) && (!fast || p.fast));
         if (sort === 'rpd') out = [...out].sort((a, b) => (b.rpd || 0) - (a.rpd || 0));
         if (sort === 'name') out = [...out].sort((a, b) => a.name.localeCompare(b.name));
+        if (sort === 'apiKey') out = [...out].sort((a, b) => (!Boolean(a.hasServerKey) ? 1 : -1));
         return out;
     }, [providers, q, cat, oai, fast, sort]);
 
     return (
         <>
             {chatProvider ? (
-                <AIChat provider={chatProvider} onBack={() => setChatProvider(null)} />
+                <AIChat
+                    provider={chatProvider}
+                    onBack={() => setChatProvider(null)}
+                />
             ) : (
                 <>
                     <header>
                         <h1>🆓 Free LLM APIs — Explorer</h1>
-                        <p>
-                            Données :{' '}
-                            <a
-                                href="https://github.com/cheahjs/free-llm-api-resources"
-                                target="_blank"
-                                rel="noreferrer"
-                            >
-                                cheahjs/free-llm-api-resources
-                            </a>
-                            {repo?.stars != null && <> · ⭐ {repo.stars.toLocaleString('fr-FR')}</>}
-                            {repo?.pushed_at && <> · MAJ repo {new Date(repo.pushed_at).toLocaleDateString('fr-FR')}</>}
-                            {meta.updatedAt && (
-                                <>
-                                    {' '}
-                                    · <b>source : {meta.source === 'readme-live' ? 'README live 🟢' : 'statique'}</b>
-                                </>
-                            )}
-                        </p>
+
                         <div className="stats">
                             {providers.length} fournisseurs · {providers.filter((p) => p.cat === 'free').length} tiers gratuits · {providers.filter((p) => p.hasServerKey).length} clés serveur chargées 🔑
                             <button
@@ -129,6 +116,7 @@ export default function App() {
                             <option value="rank">Tri : recommandé</option>
                             <option value="rpd">Tri : volume/jour</option>
                             <option value="name">Tri : nom</option>
+                            <option value="apiKey">Tri : clé API</option>
                         </select>
                     </section>
 

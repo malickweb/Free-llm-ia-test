@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 export default function AIChat({ provider, onBack }) {
     const [messages, setMessages] = useState([
@@ -7,10 +7,24 @@ export default function AIChat({ provider, onBack }) {
     const [input, setInput] = useState('');
     const [files, setFiles] = useState([]);
     const fileInputRef = useRef(null);
+    const messagesEndRef = useRef(null);
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
 
     const handleFileUpload = (e) => {
         const uploadedFiles = Array.from(e.target.files);
         setFiles(prev => [...prev, ...uploadedFiles]);
+        e.target.value = ''; // Reset input to allow uploading the same file again
+    };
+
+    const removeFile = (index) => {
+        setFiles(prev => prev.filter((_, i) => i !== index));
     };
 
     const sendMessage = async () => {
@@ -49,18 +63,21 @@ export default function AIChat({ provider, onBack }) {
                             {m.text}
                             {m.files && m.files.length > 0 && (
                                 <div className="msg-files">
-                                    {m.files.map(f => <span key={f} className="file-tag">📄 {f}</span>)}
+                                    {m.files.map((f, j) => <span key={j} className="file-tag">📄 {f}</span>)}
                                 </div>
                             )}
                         </div>
                     </div>
                 ))}
+                <div ref={messagesEndRef} />
             </div>
 
             <div className="chat-input-area">
                 <div className="file-preview">
                     {files.map((f, i) => (
-                        <span key={i} className="file-chip">{f.name} ✕</span>
+                        <span key={i} className="file-chip" onClick={() => removeFile(i)}>
+                            {f.name} ✕
+                        </span>
                     ))}
                 </div>
                 <div className="input-row">
