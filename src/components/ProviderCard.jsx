@@ -1,4 +1,4 @@
-export default function ProviderCard({ p, onOpen }) {
+export default function ProviderCard({ p, onOpen, onChat }) {
     return (
         <div
             className="card"
@@ -26,14 +26,25 @@ export default function ProviderCard({ p, onOpen }) {
                 {p.models.length > 3 && <span className="chip">+{p.models.length - 3}</span>}
             </div>
             <div className="best">🎯 {p.best}</div>
-            <a
-                href={p.url}
-                target="_blank"
-                rel="noreferrer"
-                onClick={(e) => e.stopPropagation()}
-            >
-                S'inscrire ↗
-            </a>
+            <div className="card-actions">
+                <a
+                    href={p.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    S'inscrire ↗
+                </a>
+                <button
+                    className="btn-chat"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onChat(p);
+                    }}
+                >
+                    💬 Chat IA
+                </button>
+            </div>
         </div>
     );
 }

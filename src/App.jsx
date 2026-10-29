@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import ProviderCard from './components/ProviderCard.jsx';
 import Modal from './components/Modal.jsx';
 import Playground from './components/Playground.jsx';
+import AIChat from './components/AIChat.jsx';
 
 export default function App() {
     const [providers, setProviders] = useState([]);
@@ -14,6 +15,7 @@ export default function App() {
     const [sort, setSort] = useState('rank');
     const [sel, setSel] = useState(null);
     const [busy, setBusy] = useState(false);
+    const [chatProvider, setChatProvider] = useState(null);
 
     const load = () =>
         fetch('/api/providers')
@@ -53,100 +55,106 @@ export default function App() {
 
     return (
         <>
-            <header>
-                <h1>🆓 Free LLM APIs — Explorer</h1>
-                <p>
-                    Données :{' '}
-                    <a
-                        href="https://github.com/cheahjs/free-llm-api-resources"
-                        target="_blank"
-                        rel="noreferrer"
-                    >
-                        cheahjs/free-llm-api-resources
-                    </a>
-                    {repo?.stars != null && <> · ⭐ {repo.stars.toLocaleString('fr-FR')}</>}
-                    {repo?.pushed_at && <> · MAJ repo {new Date(repo.pushed_at).toLocaleDateString('fr-FR')}</>}
-                    {meta.updatedAt && (
-                        <>
-                            {' '}
-                            · <b>source : {meta.source === 'readme-live' ? 'README live 🟢' : 'statique'}</b>
-                        </>
+            {chatProvider ? (
+                <AIChat provider={chatProvider} onBack={() => setChatProvider(null)} />
+            ) : (
+                <>
+                    <header>
+                        <h1>🆓 Free LLM APIs — Explorer</h1>
+                        <p>
+                            Données :{' '}
+                            <a
+                                href="https://github.com/cheahjs/free-llm-api-resources"
+                                target="_blank"
+                                rel="noreferrer"
+                            >
+                                cheahjs/free-llm-api-resources
+                            </a>
+                            {repo?.stars != null && <> · ⭐ {repo.stars.toLocaleString('fr-FR')}</>}
+                            {repo?.pushed_at && <> · MAJ repo {new Date(repo.pushed_at).toLocaleDateString('fr-FR')}</>}
+                            {meta.updatedAt && (
+                                <>
+                                    {' '}
+                                    · <b>source : {meta.source === 'readme-live' ? 'README live 🟢' : 'statique'}</b>
+                                </>
+                            )}
+                        </p>
+                        <div className="stats">
+                            {providers.length} fournisseurs · {providers.filter((p) => p.cat === 'free').length} tiers gratuits · {providers.filter((p) => p.hasServerKey).length} clés serveur chargées 🔑
+                            <button
+                                className="refresh"
+                                onClick={refresh}
+                                disabled={busy}
+                            >
+                                {busy ? '⏳ Rafraîchissement…' : '🔄 Lire le README du repo'}
+                            </button>
+                        </div>
+                    </header>
+
+                    <section className="controls">
+                        <input
+                            type="text"
+                            placeholder="🔍 Rechercher (fournisseur, modèle…)"
+                            value={q}
+                            onChange={(e) => setQ(e.target.value)}
+                        />
+                        <select
+                            value={cat}
+                            onChange={(e) => setCat(e.target.value)}
+                        >
+                            <option value="all">Toutes les offres</option>
+                            <option value="free">Tier gratuit permanent</option>
+                            <option value="trial">Crédits d'essai</option>
+                        </select>
+                        <label>
+                            <input
+                                type="checkbox"
+                                checked={oai}
+                                onChange={(e) => setOai(e.target.checked)}
+                            />{' '}
+                            Compatibles OpenAI
+                        </label>
+                        <label>
+                            <input
+                                type="checkbox"
+                                checked={fast}
+                                onChange={(e) => setFast(e.target.checked)}
+                            />{' '}
+                            ⚡ Ultra rapides
+                        </label>
+                        <select
+                            value={sort}
+                            onChange={(e) => setSort(e.target.value)}
+                        >
+                            <option value="rank">Tri : recommandé</option>
+                            <option value="rpd">Tri : volume/jour</option>
+                            <option value="name">Tri : nom</option>
+                        </select>
+                    </section>
+
+                    <main>
+                        {list.map((p) => (
+                            <ProviderCard
+                                key={p.id}
+                                p={p}
+                                onOpen={setSel}
+                                onChat={setChatProvider}
+                            />
+                        ))}
+                        {!list.length && <p style={{ color: 'var(--muted)' }}>Aucun résultat 🤷</p>}
+                    </main>
+
+                    <h2 className="section">🧪 Testeur d'API (via le backend — zéro CORS)</h2>
+                    <Playground providers={providers} />
+
+                    {sel && (
+                        <Modal
+                            p={sel}
+                            onClose={() => setSel(null)}
+                        />
                     )}
-                </p>
-                <div className="stats">
-                    {providers.length} fournisseurs · {providers.filter((p) => p.cat === 'free').length} tiers gratuits · {providers.filter((p) => p.hasServerKey).length} clés serveur chargées 🔑
-                    <button
-                        className="refresh"
-                        onClick={refresh}
-                        disabled={busy}
-                    >
-                        {busy ? '⏳ Rafraîchissement…' : '🔄 Lire le README du repo'}
-                    </button>
-                </div>
-            </header>
-
-            <section className="controls">
-                <input
-                    type="text"
-                    placeholder="🔍 Rechercher (fournisseur, modèle…)"
-                    value={q}
-                    onChange={(e) => setQ(e.target.value)}
-                />
-                <select
-                    value={cat}
-                    onChange={(e) => setCat(e.target.value)}
-                >
-                    <option value="all">Toutes les offres</option>
-                    <option value="free">Tier gratuit permanent</option>
-                    <option value="trial">Crédits d'essai</option>
-                </select>
-                <label>
-                    <input
-                        type="checkbox"
-                        checked={oai}
-                        onChange={(e) => setOai(e.target.checked)}
-                    />{' '}
-                    Compatibles OpenAI
-                </label>
-                <label>
-                    <input
-                        type="checkbox"
-                        checked={fast}
-                        onChange={(e) => setFast(e.target.checked)}
-                    />{' '}
-                    ⚡ Ultra rapides
-                </label>
-                <select
-                    value={sort}
-                    onChange={(e) => setSort(e.target.value)}
-                >
-                    <option value="rank">Tri : recommandé</option>
-                    <option value="rpd">Tri : volume/jour</option>
-                    <option value="name">Tri : nom</option>
-                </select>
-            </section>
-
-            <main>
-                {list.map((p) => (
-                    <ProviderCard
-                        key={p.id}
-                        p={p}
-                        onOpen={setSel}
-                    />
-                ))}
-                {!list.length && <p style={{ color: 'var(--muted)' }}>Aucun résultat 🤷</p>}
-            </main>
-
-            <h2 className="section">🧪 Testeur d'API (via le backend — zéro CORS)</h2>
-            <Playground providers={providers} />
-
-            {sel && (
-                <Modal
-                    p={sel}
-                    onClose={() => setSel(null)}
-                />
+                </>
             )}
-
             <footer>⚠️ Limites indicatives — vérifie sur les sites officiels. N'utilise pas ces tiers en production.</footer>
         </>
     );
